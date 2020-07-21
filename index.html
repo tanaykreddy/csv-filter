@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>CSV Filter</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link href="https://fonts.googleapis.com/css2?family=Courier+Prime&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        header {
+            float: left;
+            width: 100%;
+            background-color: black;
+        }
+
+        h1 {
+            font-family: 'Oswald', sans-serif;
+            font-size: 6em;
+            color: white;
+            text-align: center;
+        }
+
+        #help-button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.5em;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: black;
+            background-color: white;
+            display: block;
+            text-align: center;
+            border: none;
+            padding: 5px;
+        }
+
+        #help-button:hover {
+            background-color: #E5E5E5;
+        }
+
+        #help-button:active {
+            background-color: #CCCCCC;
+        }
+
+        #help-shader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgb(0, 0, 0, 0.5);
+            z-index: 100;
+            display: none;
+        }
+
+        #help-window {
+            margin: 75px;
+            width: calc(100vw - 150px);
+            height: calc(100vh - 150px);
+            z-index: 110;
+        }
+
+        #help-window>img {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            margin: 0 auto;
+            text-align: center;
+            border: 5px;
+            border-color: gainsboro;
+            border-style: solid;
+        }
+
+        #help-page-button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.5em;
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            color: black;
+            background-color: white;
+            display: block;
+            text-align: center;
+            border: none;
+            padding: 5px;
+            z-index: 110;
+        }
+
+        #help-page-button:hover {
+            background-color: #E5E5E5;
+        }
+
+        #help-page-button:active {
+            background-color: #CCCCCC;
+        }
+
+        textarea {
+            font-family: 'Courier Prime', monospace;
+            float: left;
+            width: 100%;
+            resize: none;
+            border-width: 0px 0 5px 0;
+            border-color: black;
+            padding: 5px;
+        }
+
+        textarea:hover,
+        #input-upload:hover {
+            background-color: #E5E5E5;
+        }
+
+        textarea:focus,
+        #input-upload:active {
+            background-color: #CCCCCC;
+            outline: none;
+        }
+
+        #input-upload {
+            font-family: 'Courier Prime', monospace;
+            float: left;
+            width: 100%;
+            height: 2em;
+            border-color: black;
+            padding: 5px;
+        }
+
+        #input-upload {
+            border-width: 0 0 5px 0;
+            border-style: solid;
+            padding: 0;
+        }
+
+        #upload-label {
+            width: 100%;
+            height: 100%;
+            display: block;
+            text-align: center;
+        }
+
+        #upload-button {
+            display: none;
+        }
+
+        #upload-label:hover {
+            cursor: pointer;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            font-family: 'Courier Prime', monospace;
+        }
+
+        td,
+        th {
+            margin: 0;
+            border-width: 0 5px 5px 0;
+            border-color: black;
+            border-style: solid;
+            border-top-width: 0px;
+            padding: 5px;
+            height: auto;
+            min-height: 2em;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background-color: white;
+            z-index: 20;
+        }
+
+        th {
+            cursor: pointer;
+        }
+
+        th:hover {
+            background-color: #E5E5E5;
+        }
+
+        th:active {
+            background-color: #CCCCCC;
+        }
+
+        #output-container {
+            clear: left;
+            width: 100%;
+            height: calc(100vh - 191px);
+        }
+
+        #table-container {
+            width: 100%;
+            height: 100%;
+            overflow-x: scroll;
+            padding: 0;
+        }
+
+        .unselected:hover td {
+            background-color: #E5E5E5;
+            cursor: pointer;
+        }
+
+        .selected td {
+            background-color: #A4C2F4;
+        }
+
+        .selected:hover td {
+            background-color: #97B2DB;
+            cursor: pointer;
+        }
+
+        #reset-button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.5em;
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            color: black;
+            background-color: white;
+            display: block;
+            text-align: center;
+            border: none;
+            padding: 5px;
+            z-index: 10;
+            border: 5px solid black;
+            display: none;
+        }
+
+        #reset-button:hover {
+            background-color: #E5E5E5;
+        }
+
+        #reset-button:active {
+            background-color: #CCCCCC;
+        }
+
+        #popup-shader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgb(0, 0, 0, 0.5);
+            z-index: 50;
+            display: none;
+        }
+
+        #popup-content {
+            z-index: 60;
+            background-color: white;
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.5em;
+            border: 5px solid black;
+            white-space: nowrap;
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            -webkit-transform: translate(-50%, -50%);
+            transform: translate(-50%, -50%);
+        }
+
+        #popup-content>div {
+            text-align: center;
+            font-weight: bold;
+            padding: 5px;
+            border-width: 0 0 5px 0;
+            border-color: black;
+            border-style: solid;
+        }
+
+        #popup-content>form {
+            margin: 5px;
+        }
+
+        form>label {
+            padding: 5px;
+        }
+
+        #filter-button,
+        #check-button,
+        #uncheck-button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1em;
+            float: left;
+            text-align: center;
+            color: black;
+            background-color: white;
+            border-color: black;
+            padding: 5px;
+        }
+
+        #filter-button:hover,
+        #check-button:hover,
+        #uncheck-button:hover {
+            background-color: #E5E5E5;
+        }
+
+        #filter-button:active,
+        #check-button:active,
+        #uncheck-button:active {
+            background-color: #CCCCCC;
+        }
+
+        #filter-button {
+            width: 100%;
+            border-width: 5px 0 0 0;
+        }
+
+        #check-button {
+            width: 50%;
+            border-width: 5px 5px 0 0;
+        }
+
+        #uncheck-button {
+            width: 50%;
+            border-width: 5px 0 0 0;
+        }
+
+        #loading-shader {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgb(0, 0, 0, 0.5);
+            z-index: 200;
+            display: none;
+            padding-top: calc(50vh);
+            font-family: 'Courier Prime', monospace;
+            font-size: 4em;
+            text-align: center;
+            color: white;
+        }
+
+        #error-message {
+            color: red;
+            font-family: 'Courier Prime', monospace;
+            padding: 5px;
+            font-size: 2em;
+            position: relative;
+            top: 10px;
+        }
+
+        @media (min-width: 650px) {
+            h1 {
+                font-size: 6em;
+            }
+
+            textarea,
+            #input-split,
+            #input-upload,
+            table {
+                font-size: 1.5em;
+            }
+
+            #upload-label {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 649px) {
+            h1 {
+                font-size: 4em;
+            }
+
+            textarea,
+            #input-split,
+            #input-upload,
+            table {
+                font-size: 1em;
+            }
+
+            #upload-label {
+                padding: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <h1>CSV Filter</h1>
+    </header>
+
+    <button id='help-button'>Help</button>
+    <div id='help-shader'>
+        <div id='help-window'>
+            <img src="img/help-1.png" id='help-image'>
+        </div>
+
+        <button id='help-page-button'>JSON Use</button>
+    </div>
+
+    <div id='input-upload'>
+        <label for='upload-button' id='upload-label'>Upload CSV File</label>
+        <input type='file' id='upload-button'>
+    </div>
+
+    <div id='output-container'>
+        <div id='table-container'>
+        </div>
+    </div>
+
+    <button type='button' id='reset-button'>Reset Filters</button>
+
+    <div id='popup-shader'>
+        <div id='popup-content'></div>
+    </div>
+
+    <div id='loading-shader'></div>
+
+    <script>
+        var archive;
+
+        var indices;
+        var names;
+        var values = [];
+
+        var prevSelect;
+
+        //Processes file uploads
+        document.querySelector("#upload-button").addEventListener('input', function () {
+            var file = document.querySelector("#upload-button").files[0];
+            var reader = new FileReader();
+            reader.onloadstart = showLoading("Uploading File...");
+            reader.onload = function () {
+                document.querySelector("#upload-label").innerHTML = "Uploaded " + file.name;
+
+                var data = reader.result.split(/\r?\n/);
+                indices = [];
+                names = [];
+                values = [];
+                for (var i = 0; i < data.length; i++) {
+                    var line = data[i].split(", ");
+                    if (line.length == 0 || line[0] == "") {
+                        data.splice(i, 1);
+                        i--;
+                        continue;
+                    }
+                    indices[i] = i + 1;
+                    values[i] = [];
+                    for (var j = 0; j < line.length; j++) {
+                        values[i][j] = line[j].substring(line[j].lastIndexOf(" ") + 1);
+                        if (i == 0) {
+                            names[j] = line[j].substring(0, line[j].lastIndexOf(" "));
+                        }
+                    }
+                }
+                archive = [Array.from(indices), Array.from(names), Array.from(values)];
+
+                displayTable();
+                hideLoading();
+            }
+
+            reader.readAsText(file);
+            document.querySelector("#upload-button").value = null;
+        });
+
+        //Displays the table with the contents given by the global variables
+        function displayTable() {
+            var finalText = "<table><thead><tr>";
+
+            for (var i = 0; i < names.length; i++) {
+                finalText += "<th onclick='filterWindow(" + i + ")'>" + names[i] + "</th>";
+            }
+            finalText += "</tr></thead><tbody id='table-body'>";
+
+            for (var i = 0; i < values.length; i++) {
+                finalText += "<tr id='row-" + i + "' class='unselected'>";
+
+                for (var j = 0; j < values[i].length; j++) {
+                    finalText += "<td>" + values[i][j] + "</td>";
+                }
+
+                finalText += "</tr>";
+            }
+
+            finalText += "</tbody></table>"
+            document.querySelector("#table-container").innerHTML = finalText;
+
+            prevSelect = -1;
+            selectLine(0);
+        }
+
+        //Displays the filter popup
+        function filterWindow(index) {
+            var counts = {};
+            for (var i = 0; i < values.length; i++) {
+                counts[values[i][index]] = 1 + (counts[values[i][index]] || 0);
+            }
+
+            var properties;
+            var parseNumbers = true;
+            properties = Object.keys(counts).map(Number);
+            if (properties.includes(NaN)) {
+                properties = Object.keys(counts);
+                parseNumbers = false;
+            }
+
+            if (parseNumbers && properties.length > 5) {
+                var step = properties[properties.length - 1] - properties[0] / 5;
+                var propBounds = [[properties[0], properties[0] + Math.floor(step)]];
+                for (var i = 1; i < 4; i++) {
+                    propBounds[i] = [propBounds[i - 1][1] + 1, properties[0] + Math.floor((i + 1) * step)];
+                }
+                propBounds[4] = [propBounds[3][1] + 1, properties[properties.length - 1]];
+
+                document.querySelector("#popup-shader").style.display = "block";
+
+                var finalText = "<div>" + names[index] + "</div><form>";
+                var propIdx = 0;
+                for (var i = 0; i < propBounds.length; i++) {
+                    var count = 0;
+                    for (; propBounds[i][1] >= properties[propIdx]; propIdx++) {
+                        if (propBounds[i][0] <= properties[propIdx]) {
+                            count += counts[properties[propIdx]];
+                        }
+                    }
+
+                    finalText += "<input type='checkbox' id='select-" + i + "'>"
+                    finalText += "<label for='select-" + i + "' id='label-" + i + "'>" + propBounds[i][0] + " to " + propBounds[i][1] + " (" + count + ")</label><br>"
+                }
+                finalText += "</form><button type='button' id='check-button'>Check All</button>";
+                finalText += "<button type='button' id='uncheck-button'>Uncheck All</button>";
+                finalText += "<button type='button' id='filter-button'>Filter</button>";
+                document.querySelector("#popup-content").innerHTML = finalText;
+
+                for (var i = 0; i < propBounds.length; i++) {
+                    document.querySelector("#select-" + i).checked = true;
+                }
+            }
+            else {
+                document.querySelector("#popup-shader").style.display = "block";
+
+                var finalText = "<span>" + name + "</span><form>"
+                for (var i = 0; i < properties.length; i++) {
+                    finalText += "<input type='checkbox' id='select-" + i + "'>"
+                    finalText += "<label for='select-" + i + "' id='label-" + i + "'>" + properties[i] + " (" + counts[properties[i]] + ")</label><br>"
+                }
+                finalText += "</form><button type='button' id='check-button'>Check All</button>";
+                finalText += "<button type='button' id='uncheck-button'>Uncheck All</button>";
+                finalText += "<button type='button' id='filter-button'>Filter</button>";
+
+                document.querySelector("#popup-content").innerHTML = finalText;
+
+                for (var i = 0; i < properties.length; i++) {
+                    document.querySelector("#select-" + i).checked = true;
+                }
+            }
+
+            //Processes the filter input
+            document.querySelector("#filter-button").addEventListener("click", function () {
+                document.querySelector("#popup-shader").style.display = "none";
+                document.querySelector("#reset-button").style.display = "initial";
+                showLoading("Filtering lines...");
+
+                setTimeout(function () {
+                    var blacklist = [];
+
+                    if (properties.length > 5) {
+                        var propIdx = 0
+                        for (var i = 0; i < propBounds.length; i++) {
+                            if (!document.querySelector("#select-" + i).checked) {
+                                for (; propBounds[i][1] >= properties[propIdx]; propIdx++) {
+                                    if (propBounds[i][0] <= properties[propIdx]) {
+                                        blacklist.push(properties[propIdx]);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else {
+                        for (var i = 0; i < properties.length; i++) {
+                            if (!document.querySelector("#select-" + i).checked) {
+                                blacklist.push(properties[i]);
+                            }
+                        }
+                    }
+
+                    blacklist = blacklist.map(String);
+                    for (var i = 0; i < values.length; i++) {
+                        if (blacklist.includes(values[i][index])) {
+                            indices.splice(i, 1);
+                            values.splice(i, 1);
+
+                            i--;
+                        }
+                    }
+
+                    displayTable();
+                    hideLoading();
+                }, 0);
+            });
+
+            //Check and uncheck all presses
+            document.querySelector("#check-button").addEventListener("click", function () {
+                if (properties.length > 5) {
+                    for (var i = 0; i < propBounds.length; i++) {
+                        document.querySelector("#select-" + i).checked = true;
+                    }
+                }
+                else {
+                    for (var i = 0; i < properties.length; i++) {
+                        document.querySelector("#select-" + i).checked = true;
+                    }
+                }
+            });
+            document.querySelector("#uncheck-button").addEventListener("click", function () {
+                if (properties.length > 5) {
+                    for (var i = 0; i < propBounds.length; i++) {
+                        document.querySelector("#select-" + i).checked = false;
+                    }
+                }
+                else {
+                    for (var i = 0; i < properties.length; i++) {
+                        document.querySelector("#select-" + i).checked = false;
+                    }
+                }
+            });
+        }
+        document.querySelector("#popup-shader").addEventListener("click", function () {
+            if (!document.querySelector("#popup-content").matches(":hover"))
+                document.querySelector("#popup-shader").style.display = "none";
+        })
+        document.querySelector("#reset-button").addEventListener("click", function () {
+            showLoading("Resetting filters...");
+            setTimeout(function () {
+                indices = Array.from(archive[0]);
+                names = Array.from(archive[1]);
+                values = Array.from(archive[2]);
+                document.querySelector("#reset-button").style.display = "none";
+                displayTable();
+                hideLoading();
+            }, 0);
+        });
+
+        //Controls line selection with mouse and arrow keys
+        function selectLine(index) {
+            if (values.length == 0) {
+                return;
+            }
+
+            if (index == 0) {
+                document.querySelector("#table-container").scrollTop = 0;
+            }
+            else {
+                document.querySelector("#row-" + (index - 1)).scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+                document.querySelector("#row-" + index).scrollIntoView({ behavior: "auto", block: "nearest", inline: "nearest" });
+            }
+
+            if (prevSelect != -1) {
+                document.querySelector("#row-" + prevSelect).classList.remove("selected");
+                document.querySelector("#row-" + prevSelect).classList.add("unselected");
+            }
+
+            document.querySelector("#row-" + index).classList.remove("unselected");
+            document.querySelector("#row-" + index).classList.add("selected");
+            prevSelect = index;
+        }
+        document.addEventListener("mouseup", function checkSelect() {
+            for (var i = 0; i < values.length; i++) {
+                if (document.querySelector("#row-" + i).matches(":hover")) {
+                    selectLine(i);
+                    return;
+                }
+            }
+        });
+        function checkClick(event) {
+            switch (event.key) {
+                case "ArrowUp":
+                    event.preventDefault();
+
+                    for (var i = prevSelect - 1; i >= 0; i--) {
+                        if (document.querySelector("#row-" + i).style.display == "") {
+                            selectLine(i);
+                            break;
+                        }
+                    }
+
+                    break;
+                case "ArrowDown":
+                    event.preventDefault();
+
+                    for (var i = prevSelect + 1; i < values.length; i++) {
+                        if (document.querySelector("#row-" + i).style.display == "") {
+                            selectLine(i);
+                            break;
+                        }
+                    }
+
+                    break;
+            }
+        }
+        window.addEventListener("keydown", checkClick);
+
+        //Displays an error with a given message
+        function showError(message) {
+            document.querySelector("#table-container").innerHTML = "<div id='error-message'>" + message + "</div>";
+        }
+
+        //Shows and hides loading screen
+        function showLoading(message) {
+            document.querySelector("#loading-shader").style.display = "initial";
+            document.querySelector("#loading-shader").innerHTML = message;
+        }
+        function hideLoading() {
+            document.querySelector("#loading-shader").style.display = "none";
+        }
+
+        //Detects whenever the help button is clicked
+        document.querySelector("#help-button").addEventListener("click", function () {
+            document.querySelector("#help-shader").style.display = "block";
+            firstImage = false;
+            toggleHelpPage();
+        });
+        document.querySelector("#help-shader").addEventListener("click", function () {
+            if (!document.querySelector("#help-image").matches(":hover") && !document.querySelector("#help-page-button").matches(":hover"))
+                document.querySelector("#help-shader").style.display = "none";
+        });
+        var firstImage = true;
+        function toggleHelpPage() {
+            if (firstImage) {
+                document.querySelector("#help-image").src = "img/help-2.png";
+                document.querySelector("#help-page-button").innerHTML = "Normal Use";
+            }
+            else {
+                document.querySelector("#help-image").src = "img/help-1.png";
+                document.querySelector("#help-page-button").innerHTML = "JSON Use";
+            }
+
+            firstImage = !firstImage;
+        }
+        document.querySelector("#help-page-button").addEventListener("click", toggleHelpPage);
+    </script>
+</body>
+
+</html>
