@@ -284,6 +284,14 @@
             margin: 5px;
         }
 
+        form>label>span {
+            border: solid black;
+            border-width: 0 0 1px 0;
+            min-width: 14px;
+            display: inline-block;
+            text-align: center;
+        }
+
         form>label {
             padding: 5px;
         }
@@ -519,7 +527,7 @@
 
                 document.querySelector("#popup-shader").style.display = "block";
 
-                var finalText = "<div>" + names[index] + "</div><form>";
+                var finalText = "<div>" + names[index] + "</div><form><input type='checkbox' id='mode-toggle'><label><span id='lower' contenteditable='true'></span> to <span id='upper' contenteditable='true'></label><br></span>";
                 var propIdx = 0;
                 for (var i = 0; i < propBounds.length; i++) {
                     var count = 0;
@@ -544,7 +552,7 @@
             else {
                 document.querySelector("#popup-shader").style.display = "block";
 
-                var finalText = "<span>" + name + "</span><form>"
+                var finalText = "<div>" + names[index] + "</div><form>"
                 for (var i = 0; i < properties.length; i++) {
                     finalText += "<input type='checkbox' id='select-" + i + "'>"
                     finalText += "<label for='select-" + i + "' id='label-" + i + "'>" + properties[i] + " (" + counts[properties[i]] + ")</label><br>"
@@ -569,6 +577,13 @@
                 setTimeout(function () {
                     var blacklist = [];
 
+                    if (document.querySelector("#mode-toggle").checked) {
+                        for (var i = 0; i < properties.length; i++) {
+                            if (properties[i] < parseInt(document.querySelector("#lower").innerHTML) || properties[i] > parseInt(document.querySelector("#upper").innerHTML)) {
+                                blacklist.push(properties[i]);
+                            }
+                        }
+                    }
                     if (properties.length > 5) {
                         var propIdx = 0
                         for (var i = 0; i < propBounds.length; i++) {
@@ -604,6 +619,50 @@
                 }, 0);
             });
 
+            //Switch between custom and preset filter modes
+            function switchCustom() {
+                document.querySelector("#mode-toggle").checked = true;
+
+                if (properties.length > 5) {
+                        for (var i = 0; i < propBounds.length; i++) {
+                            document.querySelector("#select-" + i).disabled = true;
+                        }
+                    }
+                    else {
+                        for (var i = 0; i < properties.length; i++) {
+                            document.querySelector("#select-" + i).disabled = true;
+                        }
+                    }
+            }
+            document.querySelector("#lower").addEventListener("click", switchCustom);
+            document.querySelector("#upper").addEventListener("click", switchCustom);
+            document.querySelector("#mode-toggle").addEventListener("click", function () {
+                if (document.querySelector("#mode-toggle").checked) {
+                    if (properties.length > 5) {
+                        for (var i = 0; i < propBounds.length; i++) {
+                            document.querySelector("#select-" + i).disabled = true;
+                        }
+                    }
+                    else {
+                        for (var i = 0; i < properties.length; i++) {
+                            document.querySelector("#select-" + i).disabled = true;
+                        }
+                    }
+                }
+                else {
+                    if (properties.length > 5) {
+                        for (var i = 0; i < propBounds.length; i++) {
+                            document.querySelector("#select-" + i).disabled = false;
+                        }
+                    }
+                    else {
+                        for (var i = 0; i < properties.length; i++) {
+                            document.querySelector("#select-" + i).disabled = false;
+                        }
+                    }
+                }
+            });
+            
             //Check and uncheck all presses
             document.querySelector("#check-button").addEventListener("click", function () {
                 if (properties.length > 5) {
