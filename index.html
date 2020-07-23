@@ -44,11 +44,44 @@
             padding: 5px;
         }
 
-        #help-button:hover {
+        #filter-button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.5em;
+            position: absolute;
+            top: 53px;
+            right: 10px;
+            color: black;
+            background-color: white;
+            display: block;
+            text-align: center;
+            border: none;
+            padding: 5px;
+        }
+
+        #reset-button {
+            font-family: 'Courier Prime', monospace;
+            font-size: 1.5em;
+            position: absolute;
+            top: 96px;
+            right: 10px;
+            color: black;
+            background-color: white;
+            display: block;
+            text-align: center;
+            border: none;
+            padding: 5px;
+            display: none;
+        }
+
+        #help-button:hover,
+        #filter-button:hover,
+        #reset-button:hover {
             background-color: #E5E5E5;
         }
 
-        #help-button:active {
+        #help-button:active,
+        #filter-button:active,
+        #reset-button:active {
             background-color: #CCCCCC;
         }
 
@@ -221,31 +254,6 @@
             cursor: pointer;
         }
 
-        #reset-button {
-            font-family: 'Courier Prime', monospace;
-            font-size: 1.5em;
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            color: black;
-            background-color: white;
-            display: block;
-            text-align: center;
-            border: none;
-            padding: 5px;
-            z-index: 10;
-            border: 5px solid black;
-            display: none;
-        }
-
-        #reset-button:hover {
-            background-color: #E5E5E5;
-        }
-
-        #reset-button:active {
-            background-color: #CCCCCC;
-        }
-
         #popup-shader {
             position: absolute;
             top: 0;
@@ -296,7 +304,6 @@
             padding: 5px;
         }
 
-        #filter-button,
         #check-button,
         #uncheck-button {
             font-family: 'Courier Prime', monospace;
@@ -309,21 +316,14 @@
             padding: 5px;
         }
 
-        #filter-button:hover,
         #check-button:hover,
         #uncheck-button:hover {
             background-color: #E5E5E5;
         }
 
-        #filter-button:active,
         #check-button:active,
         #uncheck-button:active {
             background-color: #CCCCCC;
-        }
-
-        #filter-button {
-            width: 100%;
-            border-width: 5px 0 0 0;
         }
 
         #check-button {
@@ -421,6 +421,7 @@
         </div>
     </div>
 
+    <button type='button' id='filter-button'>Filter Lines</button>
     <button type='button' id='reset-button'>Reset Filters</button>
 
     <div id='popup-shader'>
@@ -435,6 +436,9 @@
         var indices;
         var names;
         var values = [];
+
+        var blacklist;
+        var index;
 
         var prevSelect;
 
@@ -499,19 +503,20 @@
             document.querySelector("#table-container").innerHTML = finalText;
 
             prevSelect = -1;
+            blacklist = [];
             selectLine(0);
         }
 
         //Displays the filter popup
-        function filterWindow(index) {
+        function filterWindow(arg) {
+            index = arg;
             var counts = {};
             for (var i = 0; i < values.length; i++) {
                 counts[values[i][index]] = 1 + (counts[values[i][index]] || 0);
             }
 
-            var properties;
             var parseNumbers = false;
-            properties = Object.keys(counts);
+            properties = Object.keys(counts);   //GLOBAL
             if (/^\d+$/g.test(properties[0])) {
                 properties = properties.map(Number);
                 parseNumbers = true;
@@ -519,7 +524,7 @@
 
             if (parseNumbers && properties.length > 5) {
                 var step = (properties[properties.length - 1] - properties[0]) / 5;
-                var propBounds = [[properties[0], properties[0] + Math.floor(step)]];
+                propBounds = [[properties[0], properties[0] + Math.floor(step)]];   //GLOBAL
                 for (var i = 1; i < 4; i++) {
                     propBounds[i] = [propBounds[i - 1][1] + 1, properties[0] + Math.floor((i + 1) * step)];
                 }
@@ -542,7 +547,6 @@
                 }
                 finalText += "</form><button type='button' id='check-button'>Check All</button>";
                 finalText += "<button type='button' id='uncheck-button'>Uncheck All</button>";
-                finalText += "<button type='button' id='filter-button'>Filter</button>";
                 document.querySelector("#popup-content").innerHTML = finalText;
 
                 for (var i = 0; i < propBounds.length; i++) {
@@ -552,14 +556,16 @@
             else {
                 document.querySelector("#popup-shader").style.display = "block";
 
-                var finalText = "<div>" + names[index] + "</div><form>"
+                var finalText = "<div>" + names[index] + "</div><form>";
+                if (parseNumbers) {
+                    finalText += "<input type='checkbox' id='mode-toggle'><label><span id='lower' contenteditable='true'></span> to <span id='upper' contenteditable='true'></label><br></span>";
+                }
                 for (var i = 0; i < properties.length; i++) {
                     finalText += "<input type='checkbox' id='select-" + i + "'>"
                     finalText += "<label for='select-" + i + "' id='label-" + i + "'>" + properties[i] + " (" + counts[properties[i]] + ")</label><br>"
                 }
                 finalText += "</form><button type='button' id='check-button'>Check All</button>";
                 finalText += "<button type='button' id='uncheck-button'>Uncheck All</button>";
-                finalText += "<button type='button' id='filter-button'>Filter</button>";
 
                 document.querySelector("#popup-content").innerHTML = finalText;
 
@@ -568,29 +574,23 @@
                 }
             }
 
-            //Processes the filter input
-            document.querySelector("#filter-button").addEventListener("click", function () {
-                document.querySelector("#popup-shader").style.display = "none";
-                document.querySelector("#reset-button").style.display = "initial";
-                showLoading("Filtering lines...");
-
-                setTimeout(function () {
-                    var blacklist = [];
-
-                    if (document.querySelector("#mode-toggle").checked) {
+            document.querySelector("#popup-shader").addEventListener("click", function () {
+                if (!document.querySelector("#popup-content").matches(":hover")) {
+                    blacklist[index] = [];
+                    if (document.querySelector("#mode-toggle") && document.querySelector("#mode-toggle").checked) {
                         for (var i = 0; i < properties.length; i++) {
                             if (properties[i] < parseInt(document.querySelector("#lower").innerHTML) || properties[i] > parseInt(document.querySelector("#upper").innerHTML)) {
-                                blacklist.push(properties[i]);
+                                blacklist[index].push(properties[i]);
                             }
                         }
                     }
-                    if (properties.length > 5) {
+                    else if (properties.length > 5) {
                         var propIdx = 0
                         for (var i = 0; i < propBounds.length; i++) {
                             if (!document.querySelector("#select-" + i).checked) {
                                 for (; propBounds[i][1] >= properties[propIdx]; propIdx++) {
                                     if (propBounds[i][0] <= properties[propIdx]) {
-                                        blacklist.push(properties[propIdx]);
+                                        blacklist[index].push(properties[propIdx]);
                                     }
                                 }
                             }
@@ -599,31 +599,21 @@
                     else {
                         for (var i = 0; i < properties.length; i++) {
                             if (!document.querySelector("#select-" + i).checked) {
-                                blacklist.push(properties[i]);
+                                blacklist[index].push(properties[i]);
                             }
                         }
                     }
 
-                    blacklist = blacklist.map(String);
-                    for (var i = 0; i < values.length; i++) {
-                        if (blacklist.includes(values[i][index])) {
-                            indices.splice(i, 1);
-                            values.splice(i, 1);
-
-                            i--;
-                        }
-                    }
-
-                    displayTable();
-                    hideLoading();
-                }, 0);
-            });
+                    document.querySelector("#popup-shader").style.display = "none";
+                }
+            })
 
             //Switch between custom and preset filter modes
-            function switchCustom() {
-                document.querySelector("#mode-toggle").checked = true;
+            if (parseNumbers) {
+                function switchCustom() {
+                    document.querySelector("#mode-toggle").checked = true;
 
-                if (properties.length > 5) {
+                    if (properties.length > 5) {
                         for (var i = 0; i < propBounds.length; i++) {
                             document.querySelector("#select-" + i).disabled = true;
                         }
@@ -633,36 +623,37 @@
                             document.querySelector("#select-" + i).disabled = true;
                         }
                     }
+                }
+                document.querySelector("#lower").addEventListener("click", switchCustom);
+                document.querySelector("#upper").addEventListener("click", switchCustom);
+                document.querySelector("#mode-toggle").addEventListener("click", function () {
+                    if (document.querySelector("#mode-toggle").checked) {
+                        if (properties.length > 5) {
+                            for (var i = 0; i < propBounds.length; i++) {
+                                document.querySelector("#select-" + i).disabled = true;
+                            }
+                        }
+                        else {
+                            for (var i = 0; i < properties.length; i++) {
+                                document.querySelector("#select-" + i).disabled = true;
+                            }
+                        }
+                    }
+                    else {
+                        if (properties.length > 5) {
+                            for (var i = 0; i < propBounds.length; i++) {
+                                document.querySelector("#select-" + i).disabled = false;
+                            }
+                        }
+                        else {
+                            for (var i = 0; i < properties.length; i++) {
+                                document.querySelector("#select-" + i).disabled = false;
+                            }
+                        }
+                    }
+                });
             }
-            document.querySelector("#lower").addEventListener("click", switchCustom);
-            document.querySelector("#upper").addEventListener("click", switchCustom);
-            document.querySelector("#mode-toggle").addEventListener("click", function () {
-                if (document.querySelector("#mode-toggle").checked) {
-                    if (properties.length > 5) {
-                        for (var i = 0; i < propBounds.length; i++) {
-                            document.querySelector("#select-" + i).disabled = true;
-                        }
-                    }
-                    else {
-                        for (var i = 0; i < properties.length; i++) {
-                            document.querySelector("#select-" + i).disabled = true;
-                        }
-                    }
-                }
-                else {
-                    if (properties.length > 5) {
-                        for (var i = 0; i < propBounds.length; i++) {
-                            document.querySelector("#select-" + i).disabled = false;
-                        }
-                    }
-                    else {
-                        for (var i = 0; i < properties.length; i++) {
-                            document.querySelector("#select-" + i).disabled = false;
-                        }
-                    }
-                }
-            });
-            
+
             //Check and uncheck all presses
             document.querySelector("#check-button").addEventListener("click", function () {
                 if (properties.length > 5) {
@@ -689,20 +680,35 @@
                 }
             });
         }
-        document.querySelector("#popup-shader").addEventListener("click", function () {
-            if (!document.querySelector("#popup-content").matches(":hover"))
-                document.querySelector("#popup-shader").style.display = "none";
-        })
+        //Processes the filter input
+        document.querySelector("#filter-button").addEventListener("click", function () {
+            document.querySelector("#popup-shader").style.display = "none";
+            document.querySelector("#reset-button").style.display = "initial";
+            showLoading("Filtering lines...");
+
+            for (var i = 0; i < values.length; i++) {
+                for (var j = 0; j < blacklist.length; j++) {
+                    if (j in blacklist && (blacklist[j].includes(values[i][j]) || blacklist[j].includes(parseInt(values[i][j])))) {
+                        indices.splice(i, 1);
+                        values.splice(i, 1);
+
+                        i--;
+                        break;
+                    }
+                }
+            }
+
+            displayTable();
+            hideLoading();
+        });
         document.querySelector("#reset-button").addEventListener("click", function () {
             showLoading("Resetting filters...");
-            setTimeout(function () {
-                indices = Array.from(archive[0]);
-                names = Array.from(archive[1]);
-                values = Array.from(archive[2]);
-                document.querySelector("#reset-button").style.display = "none";
-                displayTable();
-                hideLoading();
-            }, 0);
+            indices = Array.from(archive[0]);
+            names = Array.from(archive[1]);
+            values = Array.from(archive[2]);
+            document.querySelector("#reset-button").style.display = "none";
+            displayTable();
+            hideLoading();
         });
 
         //Controls line selection with mouse and arrow keys
