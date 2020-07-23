@@ -686,29 +686,34 @@
             document.querySelector("#reset-button").style.display = "initial";
             showLoading("Filtering lines...");
 
-            for (var i = 0; i < values.length; i++) {
-                for (var j = 0; j < blacklist.length; j++) {
-                    if (j in blacklist && (blacklist[j].includes(values[i][j]) || blacklist[j].includes(parseInt(values[i][j])))) {
-                        indices.splice(i, 1);
-                        values.splice(i, 1);
+            setTimeout(function () {
+                for (var i = 0; i < values.length; i++) {
+                    for (var j = 0; j < blacklist.length; j++) {
+                        if (j in blacklist && (blacklist[j].includes(values[i][j]) || blacklist[j].includes(parseInt(values[i][j])))) {
+                            indices.splice(i, 1);
+                            values.splice(i, 1);
 
-                        i--;
-                        break;
+                            i--;
+                            break;
+                        }
                     }
                 }
-            }
 
-            displayTable();
-            hideLoading();
+                displayTable();
+                hideLoading();
+            }, 0);
         });
         document.querySelector("#reset-button").addEventListener("click", function () {
             showLoading("Resetting filters...");
-            indices = Array.from(archive[0]);
-            names = Array.from(archive[1]);
-            values = Array.from(archive[2]);
-            document.querySelector("#reset-button").style.display = "none";
-            displayTable();
-            hideLoading();
+
+            setTimeout(function () {
+                indices = Array.from(archive[0]);
+                names = Array.from(archive[1]);
+                values = Array.from(archive[2]);
+                document.querySelector("#reset-button").style.display = "none";
+                displayTable();
+                hideLoading();
+            }, 0);
         });
 
         //Controls line selection with mouse and arrow keys
